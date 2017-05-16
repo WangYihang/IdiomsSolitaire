@@ -16,7 +16,7 @@ def get_pinyin(word):
 def get_all_starts_with(letter):
     result = []
     target_pinyin = get_pinyin(letter)
-    target_pinyin_first = target_pinyin[0]
+    target_pinyin_first = target_pinyin[-1]
     for i in data:
         data_word = i[0]
         data_pinyin = i[1]
@@ -31,7 +31,7 @@ def get_random_result(data):
     return random.choice(data)
 
 def format_data(data):
-    return "[+] [%s] -> [%s]" % (data[0], data[1])
+    return "[%s] : [%s]" % (data[0], data[1])
 
 def init():
     with open("data.txt", "r") as f:
@@ -45,6 +45,10 @@ def init():
             counter += 1
         print "[+] Init finished! [%d] words." % (counter)
 
+def guess(word):
+    all_data_matched = get_all_starts_with(word)
+    result_data = format_data(get_random_result(all_data_matched))
+    return result_data
 
 def main():
     if len(sys.argv) != 2:
