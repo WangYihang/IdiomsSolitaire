@@ -10,10 +10,6 @@ pip install IdiomsSolitaire
 ```
 ```
 # Use it in your python source code
-
-Python 2.7.15rc1 (default, Apr 15 2018, 21:51:34) 
-[GCC 7.3.0] on linux2
-Type "help", "copyright", "credits" or "license" for more information.
 >>> import IdiomsSolitaire
 >>> IdiomsSolitaire.init()
 >>> print IdiomsSolitaire.guess("一心一意")
@@ -26,11 +22,19 @@ Type "help", "copyright", "credits" or "license" for more information.
 pip install -r requirements.txt
 ```
 ```
+# Use it in your termianl
+$ python IdiomsSolitaire.py
 Usage : 
         python IdiomsSolitaire.py [Idioms]
 Example : 
         python IdiomsSolitaire.py '一心一意'
 Author : 
         WangYihang <wangyihanger@gmail.com>
+$ python IdiomsSolitaire.py '一心一意'
+[+] Init finished! [23594] words.
+[一语破的] : [一句话就击中要害。的，箭靶的中心，比喻要害之处。]
+$ python IdiomsSolitaire.py '一心一意'
+[+] Init finished! [23594] words.
+[一至於此] : [竟到如此地步。]
 ```
 
