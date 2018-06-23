@@ -3,8 +3,13 @@
 一个成语接龙小脚本
 ```
 
-Usage : 
----
+#### Installation
+
+```
+pip install -r requirements.txt
+```
+
+####Usage
 ```
 Usage : 
         python IdiomsSolitaire.py [Idioms]
