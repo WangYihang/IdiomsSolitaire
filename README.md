@@ -1,14 +1,15 @@
 # IdiomsSolitaire
-```
+
 一个成语接龙小脚本
-```
 
 #### API Usage
-```
+
+```bash
 # Install it first
 pip install IdiomsSolitaire
 ```
-```
+
+```bash
 # Use it in your python source code
 >>> import IdiomsSolitaire
 >>> IdiomsSolitaire.init()
@@ -17,11 +18,13 @@ pip install IdiomsSolitaire
 
 
 #### Script Usage
-```
+
+```bash
 # Install it first
 pip install -r requirements.txt
 ```
-```
+
+```bash
 # Use it in your termianl
 $ python IdiomsSolitaire.py
 Usage : 

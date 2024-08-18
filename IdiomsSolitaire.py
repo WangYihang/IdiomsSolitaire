@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 # encoding:utf-8
 
-import hanzi2pinyin
+from pypinyin import pinyin, lazy_pinyin, Style
 import random
 import sys
 
 data = []
 
 def get_pinyin(word):
-    pinyin = []
+    result = []
     for i in word:
-        pinyin.append(hanzi2pinyin.hanzi2pinyin(i))
-    return pinyin
+        for j in pinyin(i, style=Style.NORMAL):
+            result.append(j[0])
+    return result
 
 def get_all_starts_with(letter):
     result = []
@@ -37,13 +38,13 @@ def init():
     with open("data.txt", "r") as f:
         counter = 0
         for line in f:
-            content = line.decode("UTF-8").split("\t")
+            content = line.split("\t")
             word = content[0]
             pinyin = content[1].split("'")
             meaning = content[2].replace("\n", "")
             data.append([word, pinyin, meaning])
             counter += 1
-        print "[+] Init finished! [%d] words." % (counter)
+        print("[+] Init finished! [%d] words." % (counter))
 
 def guess(word):
     all_data_matched = get_all_starts_with(word)
@@ -52,19 +53,19 @@ def guess(word):
 
 def main():
     if len(sys.argv) != 2:
-        print "Usage : "
-        print "        python IdiomsSolitaire.py [Idioms]"
-        print "Example : "
-        print "        python IdiomsSolitaire.py '一心一意'"
-        print "Author : "
-        print "        WangYihang <wangyihanger@gmail.com>"
+        print("Usage : ")
+        print("        python IdiomsSolitaire.py [Idioms]")
+        print("Example : ")
+        print("        python IdiomsSolitaire.py '一心一意'")
+        print("Author : ")
+        print("        WangYihang <wangyihanger@gmail.com>")
         exit(1)
 
-    word = sys.argv[1].decode("UTF-8")
+    word = sys.argv[1]
     init()
     all_data_matched = get_all_starts_with(word)
     result_data = format_data(get_random_result(all_data_matched))
-    print result_data
+    print(result_data)
 
 if __name__ == "__main__":
     main()
