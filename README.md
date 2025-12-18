@@ -1,43 +1,41 @@
 # IdiomsSolitaire
 
-一个成语接龙小脚本
+A high-performance Chinese idioms solitaire tool.
 
-#### API Usage
-
-```bash
-# Install it first
-pip install IdiomsSolitaire
-```
+## Installation
 
 ```bash
-# Use it in your python source code
->>> import IdiomsSolitaire
->>> IdiomsSolitaire.init()
->>> print IdiomsSolitaire.guess("一心一意")
-```
-
-
-#### Script Usage
-
-```bash
-# Install it first
 pip install -r requirements.txt
 ```
 
+Or:
+
 ```bash
-# Use it in your termianl
-$ python IdiomsSolitaire.py
-Usage : 
-        python IdiomsSolitaire.py [Idioms]
-Example : 
-        python IdiomsSolitaire.py '一心一意'
-Author : 
-        WangYihang <wangyihanger@gmail.com>
-$ python IdiomsSolitaire.py '一心一意'
-[+] Init finished! [23594] words.
-[一语破的] : [一句话就击中要害。的，箭靶的中心，比喻要害之处。]
-$ python IdiomsSolitaire.py '一心一意'
-[+] Init finished! [23594] words.
-[一至於此] : [竟到如此地步。]
+pip install .
 ```
 
+## Quick Start
+
+```bash
+python IdiomsSolitaire.py 一心一意
+```
+
+Or if installed as a package:
+
+```bash
+idiomssolitaire 一心一意
+```
+
+### Custom Database
+
+```bash
+idiomssolitaire 一心一意 --db custom.db
+```
+
+## License
+
+MIT License
+
+## Author
+
+WangYihang <wangyihanger@gmail.com>

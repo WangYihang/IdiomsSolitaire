@@ -1,0 +1,5 @@
+pypinyin>=0.55.0
+rich>=13.0.0
+sqlmodel>=0.0.14
+structlog>=23.0.0
+typer>=0.9.0

@@ -1,15 +1,20 @@
-[tool.poetry]
+[project]
 name = "idiomssolitaire"
-version = "0.1.0"
-description = ""
-authors = ["Yihang Wang <wangyihanger@gmail.com>"]
+version = "0.2.0"
+description = "A high-performance Chinese idioms solitaire tool using SQLite"
 readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "WangYihang", email = "wangyihanger@gmail.com"}
+]
+dependencies = [
+    "pypinyin>=0.55.0",
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "structlog>=23.0.0",
+    "sqlmodel>=0.0.14",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-pypinyin = "^0.52.0"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[project.scripts]
+idiomssolitaire = "IdiomsSolitaire:cli"

@@ -1,0 +1,46 @@
+name: build and push docker image
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout code
+        uses: actions/checkout@v4
+      -
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ccr.ccs.tencentyun.com
+          username: ${{ secrets.TENCENT_CLOUD_DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.TENCENT_CLOUD_DOCKER_REGISTRY_PASSWORD }}
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: ccr.ccs.tencentyun.com/neurosploit/forensics-agent:latest
+          context: .

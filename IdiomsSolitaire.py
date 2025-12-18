@@ -1,71 +1,207 @@
 #!/usr/bin/env python
-# encoding:utf-8
+"""
+IdiomsSolitaire - Chinese Idioms Solitaire Tool
 
-from pypinyin import pinyin, lazy_pinyin, Style
+A high-performance Chinese idioms solitaire program using SQLite database
+for fast querying and random matching.
+"""
 import random
-import sys
+from pathlib import Path
 
-data = []
+import structlog
+import typer
+from pypinyin import pinyin
+from pypinyin import Style
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+from sqlmodel import create_engine
+from sqlmodel import Field
+from sqlmodel import func
+from sqlmodel import select
+from sqlmodel import Session
+from sqlmodel import SQLModel
 
-def get_pinyin(word):
-    result = []
-    for i in word:
-        for j in pinyin(i, style=Style.NORMAL):
-            result.append(j[0])
+# Initialize rich console and structlog
+console = Console()
+logger = structlog.get_logger()
+
+# Global variables
+_pinyin_cache: dict[str, list[str]] = {}
+_engine = None
+_DB_FILE = 'db.sqlite3'
+
+
+class Idiom(SQLModel, table=True):  # type: ignore[call-arg]
+    """Idiom model for database."""
+
+    __tablename__ = 'idioms'
+
+    id: int | None = Field(default=None, primary_key=True)
+    word: str
+    pinyin: str
+    meaning: str
+    first_pinyin: str
+    last_pinyin: str
+
+
+def get_last_pinyin(word: str) -> str:
+    """Get the pinyin of the last character in a word (with caching)."""
+    if word in _pinyin_cache:
+        return _pinyin_cache[word][-1]
+
+    # Only calculate the last character's pinyin for efficiency
+    last_char = word[-1]
+    if last_char in _pinyin_cache:
+        return _pinyin_cache[last_char][0]
+
+    result = pinyin(last_char, style=Style.NORMAL)[0][0]
+    _pinyin_cache[last_char] = [result]
+    logger.debug('Calculated pinyin', character=last_char, pinyin=result)
     return result
 
-def get_all_starts_with(letter):
-    result = []
-    target_pinyin = get_pinyin(letter)
-    target_pinyin_first = target_pinyin[-1]
-    for i in data:
-        data_word = i[0]
-        data_pinyin = i[1]
-        data_meaning = i[2]
-        data_pinyin_first = data_pinyin[0]
-        if data_pinyin_first == target_pinyin_first:
-            result.append([data_word, data_meaning])
+
+def init_db(db_file: str | None = None) -> None:
+    """Initialize SQLite database connection."""
+    global _engine
+
+    if db_file is None:
+        db_file = _DB_FILE
+
+    db_path = Path(db_file)
+    if not db_path.exists():
+        logger.error('Database file not found', file=db_file)
+        console.print(
+            f"[red]Error:[/red] Database file '{db_file}' not found.",
+        )
+        raise typer.Exit(code=1)
+
+    try:
+        sqlite_url = f"sqlite:///{db_file}"
+        _engine = create_engine(sqlite_url, echo=False)
+
+        # Check record count
+        with Session(_engine) as session:
+            statement = select(func.count(Idiom.id))
+            count = session.exec(statement).one()
+
+        logger.info('Database loaded', file=db_file, count=count)
+        console.print(
+            f"[green]✓[/green] Database loaded: [bold]{count}[/bold] idioms",
+        )
+    except Exception as e:
+        logger.error('Database connection failed', error=str(e))
+        console.print(f"[red]Error:[/red] Failed to connect to database: {e}")
+        raise typer.Exit(code=1)
+
+
+def get_all_starts_with(word: str) -> list[tuple[str, str]]:
+    """Get all idioms that start with the last character of the given word."""
+    last_pinyin = get_last_pinyin(word)
+    logger.debug('Searching idioms', last_pinyin=last_pinyin)
+
+    with Session(_engine) as session:
+        statement = select(Idiom).where(Idiom.first_pinyin == last_pinyin)
+        idioms = session.exec(statement).all()
+        results = [(idiom.word, idiom.meaning) for idiom in idioms]
+
+    logger.info('Found matching idioms', count=len(results))
+    return results
+
+
+def guess(word: str) -> tuple[str, str] | None:
+    """Get a random idiom that can follow the given idiom."""
+    matches = get_all_starts_with(word)
+
+    if not matches:
+        logger.warning('No matching idiom found', input_word=word)
+        return None
+
+    result = random.choice(matches)
+    logger.info('Selected random idiom', word=result[0])
     return result
 
 
-def get_random_result(data):
-    return random.choice(data)
+# Initialize typer app
+app = typer.Typer(
+    name='idiomssolitaire',
+    help='A high-performance Chinese idioms solitaire tool',
+    add_completion=False,
+)
 
-def format_data(data):
-    return "[%s] : [%s]" % (data[0], data[1])
 
-def init():
-    with open("data.txt", "r") as f:
-        counter = 0
-        for line in f:
-            content = line.split("\t")
-            word = content[0]
-            pinyin = content[1].split("'")
-            meaning = content[2].replace("\n", "")
-            data.append([word, pinyin, meaning])
-            counter += 1
-        print("[+] Init finished! [%d] words." % (counter))
+@app.command()
+def main(
+    idiom: str = typer.Argument(..., help='Input Chinese idiom'),
+    db: str | None = typer.Option(
+        None, '--db', '-d', help='Database file path',
+    ),
+) -> None:
+    """Find a matching idiom for solitaire game."""
+    try:
+        # Initialize database
+        init_db(db)
 
-def guess(word):
-    all_data_matched = get_all_starts_with(word)
-    result_data = format_data(get_random_result(all_data_matched))
-    return result_data
+        # Find matching idiom
+        result = guess(idiom)
 
-def main():
-    if len(sys.argv) != 2:
-        print("Usage : ")
-        print("        python IdiomsSolitaire.py [Idioms]")
-        print("Example : ")
-        print("        python IdiomsSolitaire.py '一心一意'")
-        print("Author : ")
-        print("        WangYihang <wangyihanger@gmail.com>")
-        exit(1)
+        if result:
+            word, meaning = result
+            # Create beautiful output with Rich
+            text = Text()
+            text.append(word, style='bold cyan')
+            text.append(' : ', style='dim')
+            text.append(meaning, style='white')
 
-    word = sys.argv[1]
-    init()
-    all_data_matched = get_all_starts_with(word)
-    result_data = format_data(get_random_result(all_data_matched))
-    print(result_data)
+            panel = Panel(
+                text,
+                title='[bold green]Matching Idiom[/bold green]',
+                border_style='green',
+                padding=(1, 2),
+            )
+            console.print(panel)
+        else:
+            console.print(
+                f"[yellow]No matching idiom found for[/yellow] [bold]{idiom}[/bold]",
+            )
 
-if __name__ == "__main__":
-    main()
+    except KeyboardInterrupt:
+        logger.info('Interrupted by user')
+        console.print('\n[yellow]Interrupted by user[/yellow]')
+        raise typer.Exit(code=1)
+    except Exception as e:
+        logger.exception('Unexpected error', error=str(e))
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=1)
+
+
+def _configure_logging() -> None:
+    """Configure structlog for structured logging."""
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.TimeStamper(fmt='iso'),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+            structlog.processors.JSONRenderer(),
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+
+
+def cli() -> None:
+    """CLI entry point for package installation."""
+    _configure_logging()
+    app()
+
+
+if __name__ == '__main__':
+    _configure_logging()
+    app()
