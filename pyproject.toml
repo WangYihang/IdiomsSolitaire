@@ -4,10 +4,6 @@ version = "0.2.0"
 description = "A high-performance Chinese idioms solitaire tool using SQLite"
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "MIT"}
-authors = [
-    {name = "WangYihang", email = "wangyihanger@gmail.com"}
-]
 dependencies = [
     "pypinyin>=0.55.0",
     "typer>=0.9.0",
@@ -17,4 +13,30 @@ dependencies = [
 ]
 
 [project.scripts]
-idiomssolitaire = "idiomssolitaire:cli"
+idiomssolitaire = "idiomssolitaire"
+
+[tool.bumpversion]
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+search = "{current_version}"
+replace = "{new_version}"
+regex = false
+ignore_missing_version = false
+ignore_missing_files = false
+tag = false
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "Bump version: {current_version} → {new_version}"
+allow_dirty = false
+commit = false
+message = "Bump version: {current_version} → {new_version}"
+moveable_tags = []
+commit_args = ""
+setup_hooks = []
+pre_commit_hooks = []
+post_commit_hooks = []
+
+[tool.bump-my-version.files]
+"pyproject.toml" = [
+    'project.version'
+]
