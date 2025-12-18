@@ -232,6 +232,7 @@ def main(
             table = Table(
                 title=f'[bold green]Matching Idioms (Top {num_results})[/bold green]',
                 border_style='green',
+                show_lines=True,
             )
             table.add_column('Idiom', style='bold cyan', width=20)
             table.add_column('Meaning', style='white')
