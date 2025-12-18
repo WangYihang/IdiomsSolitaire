@@ -17,4 +17,4 @@ dependencies = [
 ]
 
 [project.scripts]
-idiomssolitaire = "IdiomsSolitaire:cli"
+idiomssolitaire = "idiomssolitaire:cli"

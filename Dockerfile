@@ -23,6 +23,6 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app/.venv /app/.venv
 COPY --chown=app:app pyproject.toml uv.lock ./
 COPY --chown=app:app .git ./.git
-COPY --chown=app:app forensics_agent ./forensics_agent
-RUN uv run python -m forensics_agent --version
-ENTRYPOINT [ "uv", "run", "python", "-m", "forensics_agent" ]
+COPY --chown=app:app idiomssolitaire ./idiomssolitaire
+RUN uv run python -m idiomssolitaire --version
+ENTRYPOINT [ "uv", "run", "python", "-m", "idiomssolitaire" ]
