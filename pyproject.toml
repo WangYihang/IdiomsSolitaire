@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-idiomssolitaire = "idiomssolitaire"
+idiomssolitaire = "idiomssolitaire.__main__:cli"
 
 [tool.bumpversion]
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"

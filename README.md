@@ -1,41 +1,34 @@
 # IdiomsSolitaire
 
-A high-performance Chinese idioms solitaire tool.
+高性能中文成语接龙工具。
 
-## Installation
+## 安装
 
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/WangYihang/IdiomsSolitaire.git
+cd IdiomsSolitaire
+uv pip install .
 ```
 
-Or:
+## 使用
 
 ```bash
-pip install .
-```
-
-## Quick Start
-
-```bash
-python IdiomsSolitaire.py 一心一意
-```
-
-Or if installed as a package:
-
-```bash
+# 查找单个匹配成语
 idiomssolitaire 一心一意
-```
 
-### Custom Database
+# 返回多个结果
+idiomssolitaire 一心一意 --top 10
 
-```bash
+# 指定数据库
 idiomssolitaire 一心一意 --db custom.db
 ```
 
-## License
+## 特性
+
+- 汉字匹配优先（首字相同优先显示）
+- 支持返回多个结果
+- 显示统计信息（匹配总数、耗时等）
+
+## 许可证
 
 MIT License
-
-## Author
-
-WangYihang <wangyihanger@gmail.com>
