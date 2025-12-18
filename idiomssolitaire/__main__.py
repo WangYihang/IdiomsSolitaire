@@ -6,6 +6,7 @@ A high-performance Chinese idioms solitaire program using SQLite database
 for fast querying and random matching.
 """
 import random
+import time
 from pathlib import Path
 
 import structlog
@@ -14,6 +15,7 @@ from pypinyin import pinyin
 from pypinyin import Style
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 from sqlmodel import create_engine
 from sqlmodel import Field
@@ -136,18 +138,38 @@ def main(
     db: str | None = typer.Option(
         None, '--db', '-d', help='Database file path',
     ),
+    top: int | None = typer.Option(
+        None, '--top', '-t', help='Number of results to return',
+    ),
 ) -> None:
     """Find a matching idiom for solitaire game."""
     try:
         # Initialize database
         init_db(db)
 
-        # Find matching idiom
-        result = guess(idiom)
+        # Record start time
+        start_time = time.time()
 
-        if result:
+        # Get all matching idioms
+        matches = get_all_starts_with(idiom)
+
+        # Calculate elapsed time
+        elapsed_time = time.time() - start_time
+
+        if not matches:
+            console.print(
+                f"[yellow]No matching idiom found for[/yellow] [bold]{idiom}[/bold]",
+            )
+            console.print(
+                f"[dim]Time elapsed: {elapsed_time * 1000:.2f}ms[/dim]",
+            )
+            return
+
+        # Determine how many results to show
+        if top is None:
+            # Show single random result (original behavior)
+            result = random.choice(matches)
             word, meaning = result
-            # Create beautiful output with Rich
             text = Text()
             text.append(word, style='bold cyan')
             text.append(' : ', style='dim')
@@ -160,10 +182,42 @@ def main(
                 padding=(1, 2),
             )
             console.print(panel)
-        else:
-            console.print(
-                f"[yellow]No matching idiom found for[/yellow] [bold]{idiom}[/bold]",
+
+            # Print statistics
+            stats_text = Text()
+            stats_text.append(f'Total matches: {len(matches)}', style='dim')
+            stats_text.append(' | ', style='dim')
+            stats_text.append(
+                f'Time elapsed: {elapsed_time * 1000:.2f}ms', style='dim',
             )
+            console.print(stats_text)
+        else:
+            # Show top N results
+            num_results = min(top, len(matches))
+            selected = random.sample(matches, num_results)
+
+            table = Table(
+                title=f'[bold green]Matching Idioms (Top {num_results})[/bold green]',
+                border_style='green',
+            )
+            table.add_column('Idiom', style='bold cyan', width=20)
+            table.add_column('Meaning', style='white')
+
+            for word, meaning in selected:
+                table.add_row(word, meaning)
+
+            console.print(table)
+
+            # Print statistics
+            stats_text = Text()
+            stats_text.append(f'Total matches: {len(matches)}', style='dim')
+            stats_text.append(' | ', style='dim')
+            stats_text.append(f'Returned: {num_results}', style='dim')
+            stats_text.append(' | ', style='dim')
+            stats_text.append(
+                f'Time elapsed: {elapsed_time * 1000:.2f}ms', style='dim',
+            )
+            console.print(stats_text)
 
     except KeyboardInterrupt:
         logger.info('Interrupted by user')
