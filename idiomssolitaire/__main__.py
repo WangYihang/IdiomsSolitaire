@@ -98,16 +98,39 @@ def init_db(db_file: str | None = None) -> None:
 
 
 def get_all_starts_with(word: str) -> list[tuple[str, str]]:
-    """Get all idioms that start with the last character of the given word."""
+    """Get all idioms that start with the last character of the given word.
+
+    Results are sorted so that idioms starting with the same character (汉字匹配)
+    come before those that only match by pinyin.
+    """
+    last_char = word[-1]
     last_pinyin = get_last_pinyin(word)
-    logger.debug('Searching idioms', last_pinyin=last_pinyin)
+    logger.debug(
+        'Searching idioms', last_char=last_char,
+        last_pinyin=last_pinyin,
+    )
 
     with Session(_engine) as session:
         statement = select(Idiom).where(Idiom.first_pinyin == last_pinyin)
         idioms = session.exec(statement).all()
         results = [(idiom.word, idiom.meaning) for idiom in idioms]
 
-    logger.info('Found matching idioms', count=len(results))
+    # Sort: character match (汉字匹配) first, then pinyin-only match
+    def sort_key(item: tuple[str, str]) -> tuple[int, str]:
+        idiom_word = item[0]
+        # 0 means character match (should come first), 1 means pinyin-only match
+        match_type = 0 if idiom_word[0] == last_char else 1
+        return (match_type, idiom_word)
+
+    results.sort(key=sort_key)
+
+    char_matches = sum(1 for w, _ in results if w[0] == last_char)
+    logger.info(
+        'Found matching idioms',
+        count=len(results),
+        char_matches=char_matches,
+        pinyin_only_matches=len(results) - char_matches,
+    )
     return results
 
 
@@ -167,8 +190,12 @@ def main(
 
         # Determine how many results to show
         if top is None:
-            # Show single random result (original behavior)
-            result = random.choice(matches)
+            # Show single result, prefer character match (汉字匹配) if available
+            char_matches = [m for m in matches if m[0][0] == idiom[-1]]
+            if char_matches:
+                result = random.choice(char_matches)
+            else:
+                result = random.choice(matches)
             word, meaning = result
             text = Text()
             text.append(word, style='bold cyan')
@@ -184,17 +211,23 @@ def main(
             console.print(panel)
 
             # Print statistics
+            char_match_count = sum(1 for m in matches if m[0][0] == idiom[-1])
             stats_text = Text()
             stats_text.append(f'Total matches: {len(matches)}', style='dim')
+            if char_match_count > 0:
+                stats_text.append(
+                    f' ({char_match_count} character matches)', style='dim',
+                )
             stats_text.append(' | ', style='dim')
             stats_text.append(
                 f'Time elapsed: {elapsed_time * 1000:.2f}ms', style='dim',
             )
             console.print(stats_text)
         else:
-            # Show top N results
+            # Show top N results, prioritizing character matches
             num_results = min(top, len(matches))
-            selected = random.sample(matches, num_results)
+            # Select from sorted matches (character matches already come first)
+            selected = matches[:num_results]
 
             table = Table(
                 title=f'[bold green]Matching Idioms (Top {num_results})[/bold green]',
@@ -209,8 +242,13 @@ def main(
             console.print(table)
 
             # Print statistics
+            char_match_count = sum(1 for m in matches if m[0][0] == idiom[-1])
             stats_text = Text()
             stats_text.append(f'Total matches: {len(matches)}', style='dim')
+            if char_match_count > 0:
+                stats_text.append(
+                    f' ({char_match_count} character matches)', style='dim',
+                )
             stats_text.append(' | ', style='dim')
             stats_text.append(f'Returned: {num_results}', style='dim')
             stats_text.append(' | ', style='dim')
